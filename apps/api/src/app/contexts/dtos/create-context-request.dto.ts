@@ -9,6 +9,8 @@ export class CreateContextRequestDto {
       'Context type (e.g., tenant, app, workspace). Must be lowercase alphanumeric with optional separators.',
     example: 'tenant',
     required: true,
+    type: String,
+    pattern: CONTEXT_IDENTIFIER_REGEX.source,
   })
   @IsDefined()
   @IsString()
@@ -23,6 +25,8 @@ export class CreateContextRequestDto {
     description: 'Unique identifier for this context. Must be lowercase alphanumeric with optional separators.',
     example: 'org-acme',
     required: true,
+    type: String,
+    pattern: CONTEXT_IDENTIFIER_REGEX.source,
   })
   @IsDefined()
   @IsString()
@@ -37,6 +41,8 @@ export class CreateContextRequestDto {
     description: 'Optional custom data to associate with this context.',
     example: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
     required: false,
+    type: 'object',
+    additionalProperties: true,
   })
   @IsOptional()
   @IsValidContextData()

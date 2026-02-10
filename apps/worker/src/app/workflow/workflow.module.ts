@@ -27,6 +27,7 @@ import {
   TriggerBroadcast,
   TriggerEvent,
   TriggerMulticast,
+  VerifyPayload,
   WorkflowInMemoryProviderService,
   WorkflowRunService,
 } from '@novu/application-generic';
@@ -67,6 +68,7 @@ import {
 import { AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
+import { ResolveChannelEndpoints } from './usecases/send-message/channel-endpoint-resolution/resolve-channel-endpoints.usecase';
 import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';
 import { StoreSubscriberJobs } from './usecases/store-subscriber-jobs';
 import { SubscriberJobBound } from './usecases/subscriber-job-bound/subscriber-job-bound.usecase';
@@ -178,6 +180,7 @@ const USE_CASES = [
   SetJobAsCompleted,
   SetJobAsFailed,
   TriggerEvent,
+  VerifyPayload,
   UpdateJobStatus,
   ProcessUnsnoozeJob,
   WebhookFilterBackoffStrategy,
@@ -191,6 +194,7 @@ const USE_CASES = [
   GetPreferences,
   WorkflowRunService,
   GetSubscriberSchedule,
+  ResolveChannelEndpoints,
 ];
 
 const PROVIDERS: Provider[] = [RedisThrottleService];

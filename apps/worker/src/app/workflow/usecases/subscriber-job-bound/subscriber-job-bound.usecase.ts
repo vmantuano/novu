@@ -6,6 +6,7 @@ import {
   CreateNotificationJobsCommand,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
+  FeatureFlagsService,
   GetPreferences,
   GetPreferencesCommand,
   Instrument,
@@ -19,6 +20,7 @@ import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplate
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
@@ -26,10 +28,18 @@ import {
   SeverityLevelEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
+import { LRUCache } from 'lru-cache';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
+
+const workflowCache = new LRUCache<string, NotificationTemplateEntity>({
+  max: 1000,
+  ttl: 1000 * 30,
+});
+
+const workflowInflightRequests = new Map<string, Promise<NotificationTemplateEntity | null>>();
 
 @Injectable()
 export class SubscriberJobBound {
@@ -42,7 +52,8 @@ export class SubscriberJobBound {
     private logger: PinoLogger,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private getPreferences: GetPreferences
+    private getPreferences: GetPreferences,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -65,7 +76,6 @@ export class SubscriberJobBound {
       identifier,
       _subscriberSource,
       requestCategory,
-      environmentName,
       topics,
       contextKeys,
     } = command;
@@ -75,6 +85,8 @@ export class SubscriberJobBound {
       : await this.getWorkflow({
           _id: templateId,
           environmentId,
+          organizationId,
+          source: command.payload?.__source,
         });
 
     if (!template) {
@@ -105,9 +117,9 @@ export class SubscriberJobBound {
       source: command.payload.__source || 'api',
       subscriberSource: _subscriberSource || null,
       requestCategory: requestCategory || null,
-      environmentName,
       statelessWorkflow: !!command.bridge?.url,
     });
+
     const subscriberProcessed = await this.createOrUpdateSubscriberUsecase.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId,
@@ -119,6 +131,7 @@ export class SubscriberJobBound {
         phone: subscriber?.phone,
         avatar: subscriber?.avatar,
         locale: subscriber?.locale,
+        timezone: subscriber?.timezone,
         data: subscriber?.data,
         channels: subscriber?.channels,
         activeWorkerName: process.env.ACTIVE_WORKER,
@@ -156,6 +169,7 @@ export class SubscriberJobBound {
           organizationId,
           subscriberId: subscriberProcessed._id,
           templateId,
+          contextKeys,
         })
       );
       critical = preferences.preferences.all.readOnly;
@@ -247,20 +261,6 @@ export class SubscriberJobBound {
   }
 
   @Instrument()
-  private async getProviderId(environmentId: string, channelType: ChannelTypeEnum): Promise<ProvidersIdEnum> {
-    const integration = await this.integrationRepository.findOne(
-      {
-        _environmentId: environmentId,
-        active: true,
-        channel: channelType,
-      },
-      'providerId'
-    );
-
-    return integration?.providerId as ProvidersIdEnum;
-  }
-
-  @Instrument()
   private async validateSubscriberIdProperty(
     command: SubscriberJobBoundCommand,
     subscriber: ISubscribersDefine
@@ -282,8 +282,62 @@ export class SubscriberJobBound {
     return true;
   }
 
-  private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {
-    return await this.notificationTemplateRepository.findById(_id, environmentId);
+  @Instrument()
+  private async getWorkflow({
+    _id,
+    environmentId,
+    organizationId,
+    source,
+  }: {
+    _id: string;
+    environmentId: string;
+    organizationId: string;
+    source?: string;
+  }): Promise<NotificationTemplateEntity | null> {
+    const cacheKey = `${environmentId}:${_id}`;
+
+    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+      component: 'worker-workflow',
+    });
+
+    const isCacheEnabled = isFeatureFlagEnabled && !source;
+
+    if (isCacheEnabled) {
+      const cached = workflowCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const inflightRequest = workflowInflightRequests.get(cacheKey);
+      if (inflightRequest) {
+        return inflightRequest;
+      }
+    }
+
+    const fetchPromise = this.notificationTemplateRepository
+      .findById(_id, environmentId)
+      .then((workflow) => {
+        if (workflow && isCacheEnabled) {
+          workflowCache.set(cacheKey, workflow);
+        }
+
+        return workflow;
+      })
+      .finally(() => {
+        if (isCacheEnabled) {
+          workflowInflightRequests.delete(cacheKey);
+        }
+      });
+
+    if (isCacheEnabled) {
+      workflowInflightRequests.set(cacheKey, fetchPromise);
+    }
+
+    return fetchPromise;
   }
 
   @InstrumentUsecase()
@@ -292,6 +346,7 @@ export class SubscriberJobBound {
     template: NotificationTemplateEntity
   ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
     const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
+    const channelTypesToFetch: ChannelTypeEnum[] = [];
 
     for (const step of template?.steps) {
       const type = step.template?.type;
@@ -299,16 +354,28 @@ export class SubscriberJobBound {
 
       const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
-      if (!channelType) continue;
-
-      if (providers[channelType] || !channelType) continue;
+      if (!channelType || providers[channelType]) continue;
 
       if (channelType === ChannelTypeEnum.IN_APP) {
         providers[channelType] = InAppProviderIdEnum.Novu;
       } else {
-        const provider = await this.getProviderId(environmentId, channelType);
-        if (provider) {
-          providers[channelType] = provider;
+        channelTypesToFetch.push(channelType);
+      }
+    }
+
+    if (channelTypesToFetch.length > 0) {
+      const integrations = await this.integrationRepository.find(
+        {
+          _environmentId: environmentId,
+          active: true,
+          channel: { $in: channelTypesToFetch },
+        },
+        'providerId channel'
+      );
+
+      for (const integration of integrations) {
+        if (!providers[integration.channel]) {
+          providers[integration.channel] = integration.providerId as ProvidersIdEnum;
         }
       }
     }
@@ -343,6 +410,7 @@ export class SubscriberJobBound {
         entity_type: 'request',
         entity_id: command.requestId,
         workflow_run_identifier: command.identifier,
+        workflow_id: command.templateId,
       };
 
       await this.traceLogRepository.createRequest([traceData]);

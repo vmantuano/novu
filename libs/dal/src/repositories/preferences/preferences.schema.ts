@@ -27,6 +27,10 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
+    _topicSubscriptionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'TopicSubscribers',
+    },
     type: Schema.Types.String,
     preferences: {
       all: {
@@ -35,6 +39,9 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
         },
         readOnly: {
           type: Schema.Types.Boolean,
+        },
+        condition: {
+          type: Schema.Types.Mixed,
         },
       },
       channels: {
@@ -66,11 +73,20 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       },
     },
     schedule: Schema.Types.Mixed,
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
   },
   { ...schemaOptions, minimize: false }
 );
 
-preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+preferencesSchema.plugin(mongooseDelete, {
+  deletedAt: true,
+  deletedBy: true,
+  overrideMethods: 'all',
+  use$neOperator: false,
+});
 
 // Subscriber Global Preferences
 // Ensures one global preference per subscriber (SUBSCRIBER_GLOBAL type)
@@ -91,7 +107,8 @@ preferencesSchema.index(
 );
 
 // Subscriber Workflow Preferences
-// Ensures one workflow preference per subscriber per template (SUBSCRIBER_WORKFLOW type)
+// Ensures one workflow preference per subscriber per template per context (SUBSCRIBER_WORKFLOW type)
+// Includes contextKeys to allow multiple preferences for different contexts
 // Partial filter ensures this only applies to SUBSCRIBER_WORKFLOW type,
 // preventing conflicts with other preference types
 preferencesSchema.index(
@@ -100,6 +117,7 @@ preferencesSchema.index(
     _subscriberId: 1,
     _templateId: 1,
     type: 1,
+    contextKeys: 1,
   },
   {
     unique: true,
@@ -126,6 +144,51 @@ preferencesSchema.index(
     },
   }
 );
+
+// Ensures one workflow preference per subscriber per template per topic subscription per context (SUBSCRIPTION_SUBSCRIBER_WORKFLOW type)
+// Includes contextKeys to allow multiple preferences for different contexts
+// Only for this type (via partial filter).
+preferencesSchema.index(
+  {
+    _environmentId: 1,
+    _subscriberId: 1,
+    _topicSubscriptionId: 1,
+    _templateId: 1,
+    type: 1,
+    contextKeys: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: {
+      type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+    },
+  }
+);
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _subscriberId: 1,
+  _templateId: 1,
+  type: 1,
+  deleted: 1,
+});
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _subscriberId: 1,
+  type: 1,
+  deleted: 1,
+});
+
+preferencesSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  _templateId: 1,
+  type: 1,
+  deleted: 1,
+});
 
 export const Preferences =
   (mongoose.models.Preferences as mongoose.Model<PreferencesDBModel>) ||

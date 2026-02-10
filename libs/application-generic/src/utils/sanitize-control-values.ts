@@ -4,6 +4,7 @@ import { PinoLogger } from '../logging';
 import {
   ChatControlType,
   DelayControlType,
+  DelayDynamicControlType,
   DelayRegularControlType,
   DelayTimedControlType,
   DigestControlSchemaType,
@@ -24,8 +25,8 @@ function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefi
 }
 
 export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
-  // TODO: There is a bug here, if the redirect doesn't contain both a url and a target it is removed from the new controlValues
-  if (!redirect?.url || redirect.url.length === 0 || !redirect?.target) {
+  // Only remove redirect if URL is empty - let validation catch missing target errors
+  if (!redirect?.url || redirect.url.length === 0) {
     return undefined;
   }
 
@@ -187,6 +188,17 @@ function sanitizeDelay(controlValues: DelayControlType) {
     return filterNullishValues(mappedValues);
   }
 
+  if (isDynamicDelayControl(controlValues)) {
+    const mappedValues: DelayDynamicControlType = {
+      type: controlValues.type,
+      dynamicKey: controlValues.dynamicKey,
+      skip: controlValues.skip,
+      extendToSchedule: controlValues.extendToSchedule,
+    };
+
+    return filterNullishValues(mappedValues);
+  }
+
   if (isRegularDelayControl(controlValues)) {
     const mappedValues: DelayRegularControlType = {
       type: controlValues.type,
@@ -320,6 +332,10 @@ function isTimedDelayControl(controlValues: unknown): controlValues is DelayTime
   return !isEmpty((controlValues as DelayTimedControlType)?.cron);
 }
 
+function isDynamicDelayControl(controlValues: unknown): controlValues is DelayDynamicControlType {
+  return !isEmpty((controlValues as DelayDynamicControlType)?.dynamicKey);
+}
+
 function isRegularDelayControl(controlValues: unknown): controlValues is DelayRegularControlType {
-  return !isTimedDelayControl(controlValues);
+  return !isTimedDelayControl(controlValues) && !isDynamicDelayControl(controlValues);
 }

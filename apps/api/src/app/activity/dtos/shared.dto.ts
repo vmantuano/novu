@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DeliveryLifecycleStatus, SeverityLevelEnum } from '@novu/shared';
+import { DeliveryLifecycleStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { IsArray, IsBoolean, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 
 export enum WorkflowRunStatusDtoEnum {
@@ -8,6 +8,15 @@ export enum WorkflowRunStatusDtoEnum {
   ERROR = 'error',
 }
 
+export class TopicResponseDto {
+  @ApiProperty({ description: 'Internal topic identifier' })
+  @IsString()
+  _topicId: string;
+
+  @ApiProperty({ description: 'Topic key' })
+  @IsString()
+  topicKey: string;
+}
 export class GetWorkflowRunResponseBaseDto {
   @ApiProperty({ description: 'Workflow run id' })
   @IsString()
@@ -47,10 +56,10 @@ export class GetWorkflowRunResponseBaseDto {
 
   @ApiProperty({
     description: 'Workflow run delivery lifecycle status',
-    enum: DeliveryLifecycleStatus,
+    enum: DeliveryLifecycleStatusEnum,
   })
-  @IsIn(Object.values(DeliveryLifecycleStatus))
-  deliveryLifecycleStatus: DeliveryLifecycleStatus;
+  @IsIn(Object.values(DeliveryLifecycleStatusEnum))
+  deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
 
   @ApiProperty({ description: 'Trigger identifier' })
   @IsString()
@@ -76,11 +85,22 @@ export class GetWorkflowRunResponseBaseDto {
   @IsBoolean()
   critical: boolean;
 
-  @ApiPropertyOptional({ description: 'Contexts (keys) in which the workflow run was executed', type: [String] })
+  @ApiPropertyOptional({
+    description: 'Context (single or multi) in which the workflow run was executed',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   contextKeys?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Topics',
+    type: [TopicResponseDto],
+  })
+  @IsOptional()
+  @IsArray()
+  topics?: TopicResponseDto[];
 }
 
 export enum ReportTypeEnum {

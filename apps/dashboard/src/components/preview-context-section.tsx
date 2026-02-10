@@ -3,12 +3,13 @@ import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ContextSearchEditor } from './context-search-editor';
 import { Button } from './primitives/button';
+import { ExternalLink } from './shared/external-link';
 import { ACCORDION_STYLES } from './workflow-editor/steps/constants/preview-context.constants';
 import { ContextSectionProps } from './workflow-editor/steps/types/preview-context.types';
 
 export function PreviewContextSection({ error, context, schema, onUpdate, onClearPersisted }: ContextSectionProps) {
   return (
-    <AccordionItem value="context" className={ACCORDION_STYLES.item}>
+    <AccordionItem value="context" className={ACCORDION_STYLES.itemLast}>
       <AccordionTrigger className={ACCORDION_STYLES.trigger}>
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-2">
@@ -22,7 +23,13 @@ export function PreviewContextSection({ error, context, schema, onUpdate, onClea
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   Context provides additional data that can be used in your workflow, such as tenant or
-                  application-specific information.
+                  application-specific information.{' '}
+                  <ExternalLink
+                    href="https://docs.novu.co/platform/workflow/contexts#contexts-in-workflows"
+                    target="_blank"
+                  >
+                    Learn more
+                  </ExternalLink>
                 </TooltipContent>
               </Tooltip>
             </div>

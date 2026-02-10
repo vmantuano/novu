@@ -192,13 +192,6 @@ export class SendMessageInApp extends SendMessageBase {
     let message: MessageEntity | null = null;
 
     await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
@@ -286,6 +279,7 @@ export class SendMessageInApp extends SendMessageBase {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
+        contextKeys: command.contextKeys,
         payload: {
           messageId: message._id,
         },

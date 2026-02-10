@@ -33,11 +33,14 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
 import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QuickTemplate, useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+
+const WORKFLOWS_TABLE_ID = 'workflows-list';
 
 interface WorkflowFilters {
   query: string;
@@ -45,10 +48,16 @@ interface WorkflowFilters {
   status: string[];
 }
 
+const DEFAULT_PAGE_SIZE = getPersistedPageSize(WORKFLOWS_TABLE_ID, 10);
+
 export const WorkflowsPage = () => {
   const { environmentSlug } = useParams();
   const track = useTelemetry();
   const navigate = useNavigate();
+  const { setPageSize: setPersistedPageSize } = usePersistedPageSize({
+    tableId: WORKFLOWS_TABLE_ID,
+    defaultPageSize: 10,
+  });
   const [searchParams, setSearchParams] = useSearchParams({
     orderDirection: DirectionEnum.DESC,
     orderBy: 'createdAt',
@@ -62,71 +71,64 @@ export const WorkflowsPage = () => {
     },
   });
 
-  const updateSearchParam = useCallback(
-    (value: string) => {
+  const updateSearchParams = useCallback(
+    (updates: Partial<{ query: string; tags: string[]; status: string[] }>) => {
       setSearchParams((prev) => {
         const sp = new URLSearchParams(prev);
-        if (value) {
-          sp.set('query', value);
-        } else {
-          sp.delete('query');
+
+        if ('query' in updates) {
+          if (updates.query) {
+            sp.set('query', updates.query);
+          } else {
+            sp.delete('query');
+          }
         }
+
+        if ('tags' in updates) {
+          sp.delete('tags');
+          for (const tag of updates.tags || []) {
+            sp.append('tags', tag);
+          }
+        }
+
+        if ('status' in updates) {
+          sp.delete('status');
+          for (const s of updates.status || []) {
+            sp.append('status', s);
+          }
+        }
+
         return sp;
       });
     },
     [setSearchParams]
   );
 
-  const updateTagsParam = useCallback(
-    (tags: string[]) => {
-      setSearchParams((prev) => {
-        const sp = new URLSearchParams(prev);
-        sp.delete('tags');
-        for (const tag of tags) {
-          sp.append('tags', tag);
-        }
-        return sp;
-      });
-    },
-    [setSearchParams]
-  );
-
-  const updateStatusParam = useCallback(
-    (status: string[]) => {
-      setSearchParams((prev) => {
-        const sp = new URLSearchParams(prev);
-        sp.delete('status');
-        for (const s of status) {
-          sp.append('status', s);
-        }
-        return sp;
-      });
-    },
-    [setSearchParams]
-  );
-
-  const debouncedSearch = useDebounce((searchQuery: string) => updateSearchParam(searchQuery), 500);
+  const debouncedSearch = useDebounce((searchQuery: string) => updateSearchParams({ query: searchQuery }), 500);
 
   const clearFilters = () => {
     form.reset({ query: '', tags: [], status: [] });
-    searchParams.delete('query');
-    searchParams.delete('tags');
-    searchParams.delete('status');
-    setSearchParams(searchParams);
+    updateSearchParams({ query: '', tags: [], status: [] });
   };
 
   useEffect(() => {
     const subscription = form.watch((value) => {
+      const updates: Partial<{ query: string; tags: string[]; status: string[] }> = {};
+
       if (value.query !== undefined) {
         debouncedSearch(value.query || '');
       }
 
       if (value.tags !== undefined) {
-        updateTagsParam(value.tags as string[]);
+        updates.tags = value.tags as string[];
       }
 
       if (value.status !== undefined) {
-        updateStatusParam(value.status as string[]);
+        updates.status = value.status as string[];
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updateSearchParams(updates);
       }
     });
 
@@ -134,7 +136,7 @@ export const WorkflowsPage = () => {
       subscription.unsubscribe();
       debouncedSearch.cancel();
     };
-  }, [form, debouncedSearch, updateTagsParam, updateStatusParam]);
+  }, [form, debouncedSearch, updateSearchParams]);
 
   const { quickTemplates, isLoading: isLoadingQuickStart } = useTemplateStore();
 
@@ -152,7 +154,7 @@ export const WorkflowsPage = () => {
   }, [quickTemplates]);
 
   const offset = parseInt(searchParams.get('offset') || '0', 10);
-  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const limit = parseInt(searchParams.get('limit') || DEFAULT_PAGE_SIZE.toString(), 10);
 
   const {
     data: workflowsData,
@@ -208,7 +210,9 @@ export const WorkflowsPage = () => {
                 size="small"
                 title="Search"
                 value={form.watch('query') || ''}
-                onChange={(value) => form.setValue('query', value || '')}
+                onChange={(value) => {
+                  form.setValue('query', value || '');
+                }}
                 placeholder="Search workflows..."
               />
               <FacetedFormFilter
@@ -218,7 +222,9 @@ export const WorkflowsPage = () => {
                 placeholder="Filter by tags"
                 options={tags?.map((tag) => ({ label: tag.name, value: tag.name })) || []}
                 selected={form.watch('tags')}
-                onSelect={(values) => form.setValue('tags', values)}
+                onSelect={(values) => {
+                  form.setValue('tags', values, { shouldDirty: true, shouldTouch: true });
+                }}
               />
               <FacetedFormFilter
                 size="small"
@@ -231,7 +237,9 @@ export const WorkflowsPage = () => {
                   { label: 'Error', value: WorkflowStatusEnum.ERROR },
                 ]}
                 selected={form.watch('status')}
-                onSelect={(values) => form.setValue('status', values)}
+                onSelect={(values) => {
+                  form.setValue('status', values, { shouldDirty: true, shouldTouch: true });
+                }}
               />
 
               {hasActiveFilters && (
@@ -318,10 +326,12 @@ export const WorkflowsPage = () => {
             isError={isError}
             limit={limit}
             onPageSizeChange={(newPageSize) => {
+              setPersistedPageSize(newPageSize);
               setSearchParams((prev) => {
                 const sp = new URLSearchParams(prev);
                 sp.set('limit', newPageSize.toString());
-                sp.delete('offset'); // Reset to first page when changing page size
+                sp.delete('offset');
+
                 return sp;
               });
             }}

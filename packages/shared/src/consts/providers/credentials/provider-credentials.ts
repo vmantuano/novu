@@ -202,6 +202,18 @@ export const sendgridConfig: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
+    description: 'Select EU if your SendGrid account is hosted in the EU data center',
+    type: 'dropdown',
+    required: false,
+    value: 'global',
+    dropdown: [
+      { name: 'Global (US)', value: 'global' },
+      { name: 'EU', value: 'eu' },
+    ],
+  },
+  {
     key: CredentialsKeyEnum.IpPoolName,
     displayName: 'IP Pool Name',
     type: 'string',
@@ -481,7 +493,7 @@ export const messagebirdConfig: IConfigCredential[] = [
   ...smsConfigBase,
 ];
 
-export const slackConfig: IConfigCredential[] = [
+export const slackConfigLegacy: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
     displayName: 'Application Id',
@@ -511,6 +523,65 @@ export const slackConfig: IConfigCredential[] = [
     key: CredentialsKeyEnum.Hmac,
     displayName: 'HMAC',
     type: 'switch',
+    required: false,
+  },
+];
+
+export const slackConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Id',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
+    type: 'string',
+    required: false,
+  },
+];
+
+export const msTeamsConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Azure Bot Application (client) ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    description: 'Azure Bot Client Secret value',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.TenantId,
+    displayName: 'Tenant ID',
+    description: 'Azure Bot Tenant ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after Teams OAuth flow finished (default behaviour will close the tab)',
+    type: 'string',
     required: false,
   },
 ];
@@ -1264,6 +1335,7 @@ export const unifonicConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+
 export const smsmodeProviderConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -1273,6 +1345,17 @@ export const smsmodeProviderConfig: IConfigCredential[] = [
     required: true,
   },
   ...smsConfigBase,
+];
+
+export const appIOConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.AppIOBaseUrl,
+    displayName: 'Base URL',
+    description: 'Base URL of the App IO API (e.g., https://api.io.italia.it/api/v1)',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
 ];
 
 export const sinchConfig: IConfigCredential[] = [
@@ -1305,4 +1388,21 @@ export const sinchConfig: IConfigCredential[] = [
     ],
   },
   ...smsConfigBase,
+];
+
+export const ISendProProviderConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'This is API key for example provider',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Sender',
+    description: 'The sender of sms',
+    type: 'text',
+    required: false,
+  },
 ];

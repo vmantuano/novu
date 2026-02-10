@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { GetContextResponseDto } from '@novu/api/models/components';
 import { ContextId, ContextType } from '@novu/shared';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useId, useState } from 'react';
@@ -6,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { RiDeleteBin2Line } from 'react-icons/ri';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
-import { ContextResponseDto } from '@/api/contexts';
 import { useContextsNavigate } from '@/components/contexts/hooks/use-contexts-navigate';
 import { EditContextFormSchema } from '@/components/contexts/schema';
 import { Button } from '@/components/primitives/button';
@@ -88,7 +88,7 @@ export const ContextOverviewSkeleton = () => {
   );
 };
 
-const ContextOverviewForm = ({ context, readOnly }: { context: ContextResponseDto; readOnly: boolean }) => {
+const ContextOverviewForm = ({ context, readOnly }: { context: GetContextResponseDto; readOnly: boolean }) => {
   const track = useTelemetry();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -191,7 +191,7 @@ const ContextOverviewForm = ({ context, readOnly }: { context: ContextResponseDt
               render={({ field, fieldState }) => (
                 <FormItem className="w-full">
                   <FormLabel
-                    tooltip={`Store additional context details as key-value pairs in the custom data field.
+                    tooltip={`Store additional context details as key-value pairs. This data can be used as variables in notification content, conditions etc.
                        \nExample: {\n "companyName": "Acme Inc",\n "plan": "enterprise"\n}`}
                   >
                     Custom data (JSON)

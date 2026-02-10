@@ -1,3 +1,62 @@
+## v3.12.0 (2026-01-07)
+
+### 🚀 Features
+
+- **js,react:** Italics formatting support in content fixes NV-7025 ([#9789](https://github.com/novuhq/novu/pull/9789))
+
+### 🩹 Fixes
+
+- **js:** inbox doubled notifications issue fixes NV-7014 ([#9773](https://github.com/novuhq/novu/pull/9773))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Paweł Tymczuk @LetItRock
+
+## v3.11.2 (2025-12-24)
+
+### 🚀 Features
+
+- **root:** new npm trusted publisher flow ([#9715](https://github.com/novuhq/novu/pull/9715))
+- **api-service:** enhance subscription preference updates to include channel-specific settings fixes NV-6998 ([#9706](https://github.com/novuhq/novu/pull/9706))
+- **api-service:** ensure newly added preference workflows appear in subscription component fixes NV-6955 ([#9669](https://github.com/novuhq/novu/pull/9669))
+- **js:** allow to subscribe without any preferences fixes NV-6966 ([#9675](https://github.com/novuhq/novu/pull/9675))
+- **react,nextjs:** subscription hooks fixes NV-6864 ([#9530](https://github.com/novuhq/novu/pull/9530))
+- **js,react,nextjs:** subscription button and preferences standalone components fixes NV-6909 ([#9527](https://github.com/novuhq/novu/pull/9527))
+- **js,react,nextjs:** subscription component fixes NV-6863 ([#9512](https://github.com/novuhq/novu/pull/9512))
+- **js:** subscriptions module fixes NV-6862 ([#9462](https://github.com/novuhq/novu/pull/9462))
+
+### 🩹 Fixes
+
+- **root:** use latest npm to able to use npm trusted publishing ([#9716](https://github.com/novuhq/novu/pull/9716))
+- **react:** fix useNotifications hook realtime behaviour fixes NV-6992 ([#9690](https://github.com/novuhq/novu/pull/9690))
+- **js:** undefined access when severity is not provided ([#9663](https://github.com/novuhq/novu/pull/9663))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- George Djabarov @djabarovgeorge
+- Himanshu Garg @merrcury
+- Paweł Tymczuk @LetItRock
+
+## v3.11.0 (2025-10-27)
+
+### 🚀 Features
+
+- **js,react,api:** context HMAC & Inbox dynamic session change fixes NV-6793 ([#9365](https://github.com/novuhq/novu/pull/9365))
+- **js,react:** context-aware inbox session fixes NV-6789 ([#9344](https://github.com/novuhq/novu/pull/9344))
+
+### 🩹 Fixes
+
+- **js:** notification count display for 99+ fixes NV-6786 ([#9402](https://github.com/novuhq/novu/pull/9402))
+- **js:** correct TypeScript types for notification.delete.pending event ([#9325](https://github.com/novuhq/novu/pull/9325))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Dima Grossman @scopsy
+- DipakHalkude @DipakHalkude
+
 ## v3.10.1 (2025-09-22)
 
 ### 🩹 Fixes

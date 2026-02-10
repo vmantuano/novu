@@ -34,9 +34,7 @@ import { Result } from '../types/fp.js';
  */
 export function subscribersPreferencesList(
   client: NovuCore,
-  subscriberId: string,
-  criticality?: operations.Criticality | undefined,
-  idempotencyKey?: string | undefined,
+  request: operations.SubscribersControllerGetSubscriberPreferencesRequest,
   options?: RequestOptions
 ): APIPromise<
   Result<
@@ -53,14 +51,12 @@ export function subscribersPreferencesList(
     | SDKValidationError
   >
 > {
-  return new APIPromise($do(client, subscriberId, criticality, idempotencyKey, options));
+  return new APIPromise($do(client, request, options));
 }
 
 async function $do(
   client: NovuCore,
-  subscriberId: string,
-  criticality?: operations.Criticality | undefined,
-  idempotencyKey?: string | undefined,
+  request: operations.SubscribersControllerGetSubscriberPreferencesRequest,
   options?: RequestOptions
 ): Promise<
   [
@@ -80,14 +76,8 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.SubscribersControllerGetSubscriberPreferencesRequest = {
-    subscriberId: subscriberId,
-    criticality: criticality,
-    idempotencyKey: idempotencyKey,
-  };
-
   const parsed = safeParse(
-    input,
+    request,
     (value) => operations.SubscribersControllerGetSubscriberPreferencesRequest$outboundSchema.parse(value),
     'Input validation failed'
   );
@@ -107,6 +97,7 @@ async function $do(
   const path = pathToFunc('/v2/subscribers/{subscriberId}/preferences')(pathParams);
 
   const query = encodeFormQuery({
+    contextKeys: payload.contextKeys,
     criticality: payload.criticality,
   });
 
@@ -127,7 +118,7 @@ async function $do(
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? '',
     operationID: 'SubscribersController_getSubscriberPreferences',
-    oAuth2Scopes: [],
+    oAuth2Scopes: null,
 
     resolvedSecurity: requestSecurity,
 

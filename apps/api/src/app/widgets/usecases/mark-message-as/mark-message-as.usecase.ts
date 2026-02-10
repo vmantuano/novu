@@ -19,7 +19,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { DeliveryLifecycleStatus, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { DeliveryLifecycleStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 
@@ -39,13 +39,6 @@ export class MarkMessageAs {
   }
 
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
-    await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
     await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId: command.subscriberId,
@@ -115,7 +108,7 @@ export class MarkMessageAs {
 
     if (allTraceData.length > 0) {
       try {
-        await this.messageInteractionService.trace(allTraceData, DeliveryLifecycleStatus.INTERACTED);
+        await this.messageInteractionService.trace(allTraceData, DeliveryLifecycleStatusEnum.INTERACTED);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} traces`);
       }
@@ -146,6 +139,7 @@ export class MarkMessageAs {
           step_run_type: message.channel as StepType,
           workflow_run_identifier: '',
           _notificationId: message._notificationId,
+          workflow_id: message._templateId,
         });
       }
     }

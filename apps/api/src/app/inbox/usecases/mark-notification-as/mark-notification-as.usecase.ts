@@ -29,10 +29,11 @@ export class MarkNotificationAs {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
-    const message = await this.messageRepository.findOne({
+    const message = await this.messageRepository.findOneForInbox({
       _environmentId: command.environmentId,
       _subscriberId: subscriber._id,
       _id: command.notificationId,
+      contextKeys: command.contextKeys,
     });
     if (!message) {
       throw new NotFoundException(`Notification with id: ${command.notificationId} is not found.`);
@@ -47,6 +48,7 @@ export class MarkNotificationAs {
         read: command.read,
         archived: command.archived,
         snoozedUntil: command.snoozedUntil,
+        contextKeys: command.contextKeys,
       })
     );
 
@@ -60,7 +62,7 @@ export class MarkNotificationAs {
     });
 
     return mapToDto(
-      (await this.messageRepository.findOne({
+      (await this.messageRepository.findOneForInbox({
         _environmentId: command.environmentId,
         _id: command.notificationId,
       })) as MessageEntity

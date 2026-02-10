@@ -86,6 +86,7 @@ async function $do(
 
   const query = encodeFormQuery({
     channels: payload.channels,
+    contextKeys: payload.contextKeys,
     createdGte: payload.createdGte,
     createdLte: payload.createdLte,
     cursor: payload.cursor,
@@ -93,6 +94,7 @@ async function $do(
     severity: payload.severity,
     statuses: payload.statuses,
     subscriberIds: payload.subscriberIds,
+    subscriptionId: payload.subscriptionId,
     topicKey: payload.topicKey,
     transactionIds: payload.transactionIds,
     workflowIds: payload.workflowIds,
@@ -115,7 +117,7 @@ async function $do(
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? '',
     operationID: 'ActivityController_getWorkflowRuns',
-    oAuth2Scopes: [],
+    oAuth2Scopes: null,
 
     resolvedSecurity: requestSecurity,
 

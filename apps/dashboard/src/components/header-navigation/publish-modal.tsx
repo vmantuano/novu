@@ -19,7 +19,7 @@ import { Badge, BadgeIcon } from '../primitives/badge';
 import { Button } from '../primitives/button';
 import { Checkbox } from '../primitives/checkbox';
 import { Collapsible, CollapsibleContent } from '../primitives/collapsible';
-import { Dialog, DialogContent } from '../primitives/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { LayoutUsageIndicator } from './layout-usage-indicator';
 import { WorkflowHoverCard } from './workflow-hover-card';
@@ -147,7 +147,7 @@ export function PublishModal({
         <PublishModalHeader />
         <PublishModalContent environment={environment} />
 
-        <div className="space-y-1.5">
+        <div className="w-full max-w-[486px] space-y-1.5">
           {workflows.length > 0 && (
             <ResourceGroupCompact
               title="Workflows"
@@ -329,14 +329,14 @@ function CompactResourceRow({
       <div className="min-w-0 flex-1">
         {resource.resourceType === 'layout' ? (
           // Layout: name and ID side by side
-          <div className="leading-0 flex w-full items-center gap-1 text-left min-w-0">
-            <span className="overflow-hidden truncate overflow-ellipsis text-xs font-medium leading-4 text-gray-900 flex-shrink min-w-0">
+          <div className="leading-0 flex w-full min-w-0 items-center gap-1 text-left">
+            <span className="min-w-0 flex-shrink truncate text-xs font-medium leading-4 text-gray-900">
               {displayName}
             </span>
             {hasDependencies && (
               <Tooltip>
                 <TooltipTrigger>
-                  <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
+                  <RiLinkUnlinkM className="h-3 w-3 flex-shrink-0 text-orange-500" />
                 </TooltipTrigger>
                 <TooltipContent>
                   {dependencies && dependencies.length > 0 && (
@@ -355,12 +355,12 @@ function CompactResourceRow({
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-1">
-              <span className="truncate text-xs font-medium text-gray-900">{displayName}</span>
+            <div className="flex min-w-0 items-center gap-1">
+              <span className="min-w-0 truncate text-xs font-medium text-gray-900">{displayName}</span>
               {hasDependencies && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
+                    <RiLinkUnlinkM className="h-3 w-3 flex-shrink-0 text-orange-500" />
                   </TooltipTrigger>
                   <TooltipContent>
                     {dependencies && dependencies.length > 0 && (
@@ -377,7 +377,7 @@ function CompactResourceRow({
                 </Tooltip>
               )}
             </div>
-            <div className="font-mono text-xs tracking-tight text-gray-400">{slug}</div>
+            <div className="truncate font-mono text-xs tracking-tight text-gray-400">{slug}</div>
           </>
         )}
 
@@ -448,14 +448,18 @@ function PublishModalHeader() {
 }
 
 function PublishModalContent({ environment }: { environment: IEnvironment }) {
+  const title = `Publishing changes to ${environment?.name}`;
+  const description = `You're about to publish changes to ${environment?.name}. This may cause breaking behavior. Please review all changes before proceeding.`;
+
   return (
-    <div className="space-y-1">
-      <h2 className="text-sm font-medium text-gray-900">Publishing changes to {environment?.name}</h2>
-      <p className="text-xs text-gray-500">
-        You're about to publish changes to {environment?.name}. This may cause breaking behavior. Please review all
-        changes before proceeding.
-      </p>
-    </div>
+    <>
+      <DialogDescription className="sr-only">{description}</DialogDescription>
+      <DialogTitle className="sr-only">{title}</DialogTitle>
+      <div className="space-y-1">
+        <h2 className="text-sm font-medium text-gray-900">{title}</h2>
+        <p className="text-xs text-gray-500">{description}</p>
+      </div>
+    </>
   );
 }
 

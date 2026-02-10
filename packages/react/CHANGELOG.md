@@ -1,3 +1,42 @@
+## v3.12.0 (2026-01-07)
+
+This was a version bump only for @novu/react to align it with other projects, there were no code changes.
+
+## v3.11.2 (2025-12-24)
+
+### 🚀 Features
+
+- **root:** new npm trusted publisher flow ([#9715](https://github.com/novuhq/novu/pull/9715))
+- **js:** allow to subscribe without any preferences fixes NV-6966 ([#9675](https://github.com/novuhq/novu/pull/9675))
+- **react,nextjs:** subscription hooks fixes NV-6864 ([#9530](https://github.com/novuhq/novu/pull/9530))
+- **js,react,nextjs:** subscription button and preferences standalone components fixes NV-6909 ([#9527](https://github.com/novuhq/novu/pull/9527))
+- **js,react,nextjs:** subscription component fixes NV-6863 ([#9512](https://github.com/novuhq/novu/pull/9512))
+
+### 🩹 Fixes
+
+- **root:** use latest npm to able to use npm trusted publishing ([#9716](https://github.com/novuhq/novu/pull/9716))
+- **react:** fix useNotifications hook realtime behaviour fixes NV-6992 ([#9690](https://github.com/novuhq/novu/pull/9690))
+- **react:** update inbox links to point to the correct platform overview ([#9355](https://github.com/novuhq/novu/pull/9355))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- George Djabarov @djabarovgeorge
+- Himanshu Garg @merrcury
+- Pawan Jain
+- Paweł Tymczuk @LetItRock
+
+## v3.11.0 (2025-10-27)
+
+### 🚀 Features
+
+- **js,react,api:** context HMAC & Inbox dynamic session change fixes NV-6793 ([#9365](https://github.com/novuhq/novu/pull/9365))
+- **js,react:** context-aware inbox session fixes NV-6789 ([#9344](https://github.com/novuhq/novu/pull/9344))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
 ## v3.10.1 (2025-09-22)
 
 This was a version bump only for @novu/react to align it with other projects, there were no code changes.
